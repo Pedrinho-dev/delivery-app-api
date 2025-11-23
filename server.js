@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import cors from "cors"
 import userRoute from "./routes/userRoute.js";
 import authRoute from "./routes/authRoute.js";
 import orderRoute from "./routes/orderRoute.js";
@@ -13,6 +14,7 @@ const db = process.env.MONGO_URI;
 const server = express();
 
 server.use(express.json());
+server.use(cors());
 
 server.use("/user", userRoute);
 server.use("/auth", authRoute);
