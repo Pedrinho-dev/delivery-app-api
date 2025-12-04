@@ -4,52 +4,51 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(authMiddleware);
 
-// Create a new order
-router.post("/", async (req, res) => {
+// Create
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const newOrder = new Order(req.body);
-    const savedOrder = await newOrder.save();
-    res.status(201).json(savedOrder);
+    const saved = await newOrder.save();
+    const populated = await Order.findById(saved._id).populate("idClient");
+    res.status(201).json(populated);
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// Get all orders
-router.get("/", async (req, res) => {
+// Get all
+router.get("/", async (_, res) => {
   try {
-    const orders = await Order.find();
-    const formattedOrders = orders.map((order) => {
-      return {
-        ...order._doc,
-        schedule: new Date(order.schedule).toLocaleString("pt-BR", {
+    const orders = await Order.find().populate("idClient");
+
+    res.status(200).json(
+      orders.map((o) => ({
+        ...o._doc,
+        schedule: new Date(o.schedule).toLocaleString("pt-BR", {
           timeZone: "America/Sao_Paulo",
         }),
-      };
-    });
-
-    res.status(200).json(formattedOrders);
+      }))
+    );
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// Get orders with accept = false (Pending)
-router.get("/pending", async (req, res) => {
+// Pending
+router.get("/pending", async (_, res) => {
   try {
-    const pendingOrders = await Order.find({ accept: false });
-    res.status(200).json(pendingOrders);
+    const pending = await Order.find({ accept: false }).populate("idClient");
+    res.status(200).json(pending);
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// Get order by ID
-router.get("/:id", async (req, res) => {
+// Get by ID
+router.get("/:id", authMiddleware, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("idClient");
     if (!order) return res.status(404).json("Order not found");
     res.status(200).json(order);
   } catch (err) {
@@ -57,27 +56,26 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update order
-router.put("/:id", async (req, res) => {
+// Update
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const updatedOrder = await Order.findByIdAndUpdate(
+    const updated = await Order.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
       { new: true }
-    );
-    if (!updatedOrder) return res.status(404).json("Order not found");
-    res.status(200).json(updatedOrder);
+    ).populate("idClient");
+    res.status(200).json(updated);
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// Delete order
+// Delete
 router.delete("/:id", async (req, res) => {
   try {
-    const deletedOrder = await Order.findByIdAndDelete(req.params.id);
-    if (!deletedOrder) return res.status(404).json("Order not found");
-    res.status(200).json("Order has been deleted...");
+    const del = await Order.findByIdAndDelete(req.params.id);
+    if (!del) return res.status(404).json("Order not found");
+    res.status(200).json("Order deleted");
   } catch (err) {
     res.status(500).json(err);
   }

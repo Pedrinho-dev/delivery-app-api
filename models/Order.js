@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema({
   clientLoc: { type: String },
   destinyLoc: { type: String },
   schedule: { type: Date },
-  accept: { type: Boolean },
+  accept: { type: Boolean, default: false },
   idClient: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   locDeliveryMan: { type: String },
 });
